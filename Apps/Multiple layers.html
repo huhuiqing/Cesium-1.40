@@ -1,0 +1,68 @@
+<!DOCTYPE html>//叠加瓦片坐标信息、格网、geoserver发布的地图
+<html>
+<head>
+    <!-- Use correct character set. -->
+    <meta charset="utf-8">
+    <!-- Tell IE to use the latest, best version. -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>Hello World!</title>
+    <script src="../Build/Cesium/Cesium.js"></script> <script src="../Libs/TileLonlatsImageryProvider.js" type="text/javascript"></script>
+    <style>
+        @import url(../Build/Cesium/Widgets/widgets.css);
+        html, body, #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+<script>
+	  var viewer = new Cesium.Viewer('cesiumContainer'); 
+	  var TileCoordinatesImagery = new Cesium.TileCoordinatesImageryProvider();
+//天地图影像
+       var tdtImagerLayerProvider = new Cesium.WebMapTileServiceImageryProvider({
+            url: "http://t0.tianditu.com/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles",
+            layer: "tiandituImg",
+            style: "default",
+            format: "image/jpeg",
+            tileMatrixSetID: "tiandituImg",
+            show: true,
+            maximumLevel: 18
+        });
+// geoserver发布的地图影像
+		 var provider = new Cesium.WebMapServiceImageryProvider({
+           url: 'http://localhost:8081/geoserver/cite/wms',
+           layers: 'cite:geotiff_coverage',
+                    parameters: {
+                        service : 'WMS',
+                        format: 'image/png',
+                        transparent: true,
+           tileMatrixSetID:"EPSG:4326"
+                    }
+                });
+  viewer.imageryLayers.addImageryProvider(tdtImagerLayerProvider);
+  var GridImagery= new Cesium.GridImageryProvider();
+//取消双击事件
+viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+ //设置homebutton的位置
+        Cesium.Camera.DEFAULT_VIEW_RECTANGLE =
+        Cesium.Rectangle.fromDegrees(110.15, 34.54, 110.25, 34.56);//Rectangle(west, south, east, north)
+ //设置初始位置
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(110.20, 34.55, 3000000)
+        });
+ var imageryLayers = viewer.imageryLayers;//多图层控制
+ var geoservermapLayers= vartdtNoteLayer = imageryLayers.addImageryProvider(provider);
+//添加geoserver的图层
+var TileCoordinatesImageryLayer =imageryLayers.addImageryProvider(TileCoordinatesImagery);
+//添加注记图层
+imageryLayers.raiseToTop(TileCoordinatesImageryLayer);//将注记图层置顶
+</script>
+</body>
+</html>
