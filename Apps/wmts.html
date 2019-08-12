@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <!-- Use correct character set. -->
+    <meta charset="utf-8">
+    <!-- Tell IE to use the latest, best version. -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>Load wmts</title>
+    <script src="../Build/Cesium/Cesium.js"></script>
+	 <style>
+        @import url(../Build/Cesium/Widgets/widgets.css);
+
+        html, body, #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+	
+    </style>
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+/*加载wmts服务*/
+var viewer = new Cesium.Viewer('cesiumContainer');
+	var url='http://124.16.184.93:8080/geoserver/gwc/rest/wmts/CHINA2M:china2m/{TileMatrixSet}/EPSG:4326:{TileMatrix}/{TileRow}/{TileCol}?format=image/png';
+
+image = new Cesium.WebMapTileServiceImageryProvider({
+     url:url,
+     layer:'CHINA2M:china2m',
+     format: "image/png",
+     style:'raster',
+     maximumLevel: 20,
+	 tilingScheme: new Cesium.GeographicTilingScheme(),
+     tileMatrixSetID:"EPSG:4326"
+ });
+  viewer.imageryLayers.addImageryProvider(image)
+    </script>
+
+</body>
+</html>
