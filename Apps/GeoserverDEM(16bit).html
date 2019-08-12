@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Use correct character set. -->
+    <meta charset="utf-8">
+    <!-- Tell IE to use the latest, best version. -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>16bitHongzehu地形</title>
+    <script src="../Build/Cesium/Cesium.js"></script>
+	<script src="../Build/GeoserverTerrainProvider.js" type="text/javascript"></script>
+ <style>
+        @import url(../Build/Cesium/Widgets/widgets.css);
+
+        html, body, #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+	
+    </style>
+</head>
+<body>
+ <div id="cesiumContainer"  class="fullSize"></div>
+<span style="white-space:pre"></span>
+<div id="mouse_state" style="position:absolute;z-index:9999;top:1px;left:1px;background-color:white"></div>
+
+<script>
+   var viewer = new Cesium.Viewer('cesiumContainer');
+  var terrainProvider = new Cesium.GeoserverTerrainProvider({     
+          url : "http://localhost:8081/geoserver/cite/wms",
+          layerName: "hongzehu-16tif-pyramidal",               
+          });  
+		   viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+ viewer.terrainProvider = terrainProvider;
+    //设置初始位置
+    viewer.camera.setView( {
+        destination  : Cesium.Cartesian3.fromDegrees( 118.69, 33.55, 36806 )
+    } );
+   
+    //取消双击事件
+    viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+  
+
+    viewer.scene.fxaa = false;//抗锯齿
+    viewer.scene.fog.enabled = false;
+    //viewer.scene.skyAtmosphere.show = false;
+
+    var CesiumEventHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    //得到当前三维场景的椭球体
+    var ellipsoid = viewer.scene.globe.ellipsoid;
+    CesiumEventHandler.setInputAction(function (movement) {
+        cartesian = viewer.camera.pickEllipsoid(movement.position, ellipsoid);//movement.endPosition
+        if (cartesian) {
+            //将笛卡尔坐标转换为地理坐标
+            var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            var longitudeDegree = Cesium.Math.toDegrees(cartographic.longitude);
+            var latitudeDegree = Cesium.Math.toDegrees(cartographic.latitude);
+            TerrainTool.LonlatPointsTerrainData([{ 'lon': longitudeDegree, 'lat': latitudeDegree }],
+                function (terrainData) {
+                    if (terrainData.length > 0) {
+                        alert('lon:' + Cesium.Math.toDegrees(terrainData[0].longitude) +
+                            '\nlat:' + Cesium.Math.toDegrees(terrainData[0].latitude) +
+                            '\nheight:' +  (terrainData[0].height ? terrainData[0].height : 0)
+                            );
+                    } else {
+                        alert('nodata');
+                    }
+                    
+            });
+        }  
+    }, Cesium.ScreenSpaceEventType.LEFT_UP);
+   
+        var TerrainTool=(
+            function () {
+          var terrainProvider = new Cesium.GeoserverTerrainProvider({     
+          url : "http://localhost:8081/geoserver/cite/wms",
+          layerName: "hongzehu-16tif-pyramidal",               
+          });  
+                var terrainLevel = 14;//数据等级
+
+                function _() {
+                }
+
+                _.LonlatPointsTerrainData = function (lonlats, callback) {
+                    //请求高程
+                    var pointArrInput = [];
+                    for (var i = 0; i < lonlats.length; i++) {
+                        pointArrInput.push(Cesium.Cartographic.fromDegrees(lonlats[i].lon, lonlats[i].lat));
+                    }
+                    var promise = Cesium.sampleTerrain(terrainProvider, terrainLevel, pointArrInput);//pointArrInput
+                    Cesium.when(promise, function (updatedPositions) {
+                        callback(updatedPositions);
+                    });
+                };
+
+                return _;
+            }
+        )();
+	
+  </script>
+</body>
+</html>
